@@ -35,6 +35,8 @@ export enum ServerAuthType {
   GoogleAuth = 2,   // Google OAuth authentication
   NotionAuth = 3,   // Notion OAuth authentication
   FigmaAuth = 4,   // Figma OAuth authentication
+  GoogleCalendarAuth = 5,   // Google Calendar OAuth authentication
+  GithubAuth = 6,   // Github OAuth authentication
 }
 
 export enum ServerCategory {

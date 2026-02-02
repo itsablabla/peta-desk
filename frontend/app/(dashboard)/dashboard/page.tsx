@@ -718,11 +718,13 @@ function DashboardContent() {
 
   // OAuth authorization handling
   // Helper function to get auth type display name
-  const getAuthTypeName = (authType: number): string => {
+  const getAuthTypeName = (authType: ServerAuthType): string => {
     switch (authType) {
-      case 2: return 'Google Drive'
-      case 3: return 'Notion'
-      case 4: return 'Figma'
+      case ServerAuthType.GoogleAuth: return 'Google Drive'
+      case ServerAuthType.NotionAuth: return 'Notion'
+      case ServerAuthType.FigmaAuth: return 'Figma'
+      case ServerAuthType.GoogleCalendarAuth: return 'Google Calendar'
+      case ServerAuthType.GithubAuth: return 'Github'
       default: return 'OAuth'
     }
   }
@@ -951,7 +953,7 @@ function DashboardContent() {
       }
     } catch (error) {
       console.error('OAuth auth error:', error)
-      toast.error(`Failed to authorize ${getAuthTypeName(authType || 0)}`)
+      toast.error(`Failed to authorize ${getAuthTypeName(authType ?? ServerAuthType.ApiKey)}`)
       if (toolId) {
         setAuthStatus((prev) => ({ ...prev, [toolId]: 'failed' }))
       }
