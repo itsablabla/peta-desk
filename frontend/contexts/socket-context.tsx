@@ -782,7 +782,13 @@ export function SocketProvider({
         return []
       }
 
-      return servers
+      // Ensure token is never loaded from legacy storage
+      return servers.map((server: any) => ({
+        id: server.id,
+        name: server.name,
+        url: server.url,
+        token: ''
+      }))
     } catch (error) {
       console.error('❌ Failed to load servers from storage:', error)
       return []
@@ -790,7 +796,7 @@ export function SocketProvider({
   }, [storageKey])
 
   /**
-   * Save server configuration to localStorage
+   * Save server configuration to localStorage (token intentionally stripped)
    */
   const saveServersToStorage = useCallback(
     (configs: ServerConfig[]) => {
@@ -799,7 +805,11 @@ export function SocketProvider({
       }
 
       try {
-        localStorage.setItem(storageKey, JSON.stringify(configs))
+        const sanitizedConfigs = {
+          ...configs,
+          token: ''
+        }
+        localStorage.setItem(storageKey, JSON.stringify(sanitizedConfigs))
       } catch (error) {
         console.error('❌ Failed to save servers to storage:', error)
       }
