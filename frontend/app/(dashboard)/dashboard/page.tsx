@@ -791,11 +791,15 @@ function DashboardContent() {
   // Helper function to get auth type display name
   const getAuthTypeName = (authType: ServerAuthType): string => {
     switch (authType) {
+      case ServerAuthType.ApiKey: return 'API Key'
       case ServerAuthType.GoogleAuth: return 'Google Drive'
       case ServerAuthType.NotionAuth: return 'Notion'
       case ServerAuthType.FigmaAuth: return 'Figma'
       case ServerAuthType.GoogleCalendarAuth: return 'Google Calendar'
-      case ServerAuthType.GithubAuth: return 'Github'
+      case ServerAuthType.GithubAuth: return 'GitHub'
+      case ServerAuthType.ZendeskAuth: return 'Zendesk'
+      case ServerAuthType.CanvasAuth: return 'Canvas'
+      case ServerAuthType.CanvaAuth: return 'Canva'
       default: return 'OAuth'
     }
   }
@@ -948,9 +952,17 @@ function DashboardContent() {
             return
           }
 
-          const redirectUri = 'http://localhost'
+          const isCanvaAuth =
+            configTemplateObj?.authType === ServerAuthType.CanvaAuth ||
+            effectiveAuthType === ServerAuthType.CanvaAuth
+          const redirectUri = isCanvaAuth
+            ? 'http://127.0.0.1'
+            : 'http://localhost'
           let pkceVerifier: string | undefined
-          let resolvedOAuthConfig = oAuthConfig
+          let resolvedOAuthConfig = {
+            ...oAuthConfig,
+            redirectUri
+          }
 
           try {
             const pkceConfig = getOAuthPKCEConfig(oAuthConfig)
@@ -958,9 +970,9 @@ function DashboardContent() {
               const pkceParams = await generateOAuthPKCEParams(pkceConfig.method)
               pkceVerifier = pkceParams.codeVerifier
               resolvedOAuthConfig = {
-                ...oAuthConfig,
+                ...resolvedOAuthConfig,
                 extraParams: {
-                  ...(oAuthConfig.extraParams || {}),
+                  ...(resolvedOAuthConfig.extraParams || {}),
                   code_challenge: pkceParams.codeChallenge,
                   code_challenge_method: pkceConfig.method
                 }
@@ -1207,7 +1219,7 @@ function DashboardContent() {
       t.serverId ? t.serverId === toolServerId : t.name === toolServerId
     )
 
-    // If allowUserInput=true and authType in ServerAuthType enum (OAuth), need to check authorization status
+    // If allowUserInput=true and not configured, trigger configuration flow (OAuth/API Key)
     if (tool && tool.allowUserInput && !tool.configured) {
       // If not authorized, clicking should trigger the authorization flow regardless of current check state
       console.log(`   Tool requires authorization, triggering auth flow...`)
@@ -1946,7 +1958,7 @@ function DashboardContent() {
                                         )}
                                     </div>
 
-                                    {/* Disconnect icon - only shown when allowUserInput=true and authType in [2,3,4] and authorized */}
+                                    {/* Disconnect icon - shown when allowUserInput=true and configured */}
                                     {tool.allowUserInput &&
                                       tool.configured && (
                                         <Tooltip>
