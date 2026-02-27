@@ -88,7 +88,7 @@ export const useApprovalQueueStore = create<ApprovalQueueState>((set, get) => ({
       }
       return {
         requests: [
-          { id, status: decision, toolName: 'Unknown', serverId: null, redactedArgs: null, expiresAt: new Date().toISOString(), createdAt: new Date().toISOString(), policyVersion: 0, matchedRuleId: null, reason: null, coreConnectionId: '' },
+          { id, status: decision, toolName: 'Loading...', serverId: null, redactedArgs: null, expiresAt: new Date().toISOString(), createdAt: new Date().toISOString(), policyVersion: 0, matchedRuleId: null, reason: null, coreConnectionId: '' },
           ...state.requests
         ]
       }
@@ -107,7 +107,7 @@ export const useApprovalQueueStore = create<ApprovalQueueState>((set, get) => ({
       }
       return {
         requests: [
-          { id, status: 'EXPIRED', toolName: 'Unknown', serverId: null, redactedArgs: null, expiresAt: new Date().toISOString(), createdAt: new Date().toISOString(), policyVersion: 0, matchedRuleId: null, reason: null, coreConnectionId: '' },
+          { id, status: 'EXPIRED', toolName: 'Loading...', serverId: null, redactedArgs: null, expiresAt: new Date().toISOString(), createdAt: new Date().toISOString(), policyVersion: 0, matchedRuleId: null, reason: null, coreConnectionId: '' },
           ...state.requests
         ]
       }
@@ -126,7 +126,7 @@ export const useApprovalQueueStore = create<ApprovalQueueState>((set, get) => ({
       }
       return {
         requests: [
-          { id, status: 'EXECUTED', toolName: 'Unknown', serverId: null, redactedArgs: null, expiresAt: new Date().toISOString(), createdAt: new Date().toISOString(), policyVersion: 0, matchedRuleId: null, reason: null, coreConnectionId: '' },
+          { id, status: 'EXECUTED', toolName: 'Loading...', serverId: null, redactedArgs: null, expiresAt: new Date().toISOString(), createdAt: new Date().toISOString(), policyVersion: 0, matchedRuleId: null, reason: null, coreConnectionId: '' },
           ...state.requests
         ]
       }
@@ -145,7 +145,7 @@ export const useApprovalQueueStore = create<ApprovalQueueState>((set, get) => ({
       }
       return {
         requests: [
-          { id, status: 'FAILED', toolName: 'Unknown', serverId: null, redactedArgs: null, expiresAt: new Date().toISOString(), createdAt: new Date().toISOString(), policyVersion: 0, matchedRuleId: null, reason: null, coreConnectionId: '' },
+          { id, status: 'FAILED', toolName: 'Loading...', serverId: null, redactedArgs: null, expiresAt: new Date().toISOString(), createdAt: new Date().toISOString(), policyVersion: 0, matchedRuleId: null, reason: null, coreConnectionId: '' },
           ...state.requests
         ]
       }
