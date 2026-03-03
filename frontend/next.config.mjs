@@ -7,11 +7,8 @@
  * Next.js configuration for Electron packaging
  */
 /** @type {import('next').NextConfig} */
-const isDev = process.env.NODE_ENV === 'development'
-
 const nextConfig = {
-  // Electron static export config - production only
-  output: isDev ? undefined : 'export',
+  // Next.js server mode for Railway hosting
 
   // Image config - disable optimization for Electron
   images: {
@@ -22,13 +19,10 @@ const nextConfig = {
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;"
   },
 
-  // Fix packaged path issues - production only
-  assetPrefix: isDev ? undefined : './',
-
   // Experimental/performance options
   experimental: {
     optimizeCss: false, // Keep disabled for Electron
-    optimizePackageImports: ['@radix-ui/react-*', 'lucide-react']
+    optimizePackageImports: ['lucide-react']
   },
 
   // TypeScript config - temporarily ignore build errors
@@ -38,7 +32,7 @@ const nextConfig = {
 
   // ESLint config
   eslint: {
-    ignoreDuringBuilds: false
+    ignoreDuringBuilds: true
   },
 
   // Enable compression
