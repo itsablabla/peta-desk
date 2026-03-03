@@ -19,6 +19,7 @@ import { ReconnectPasswordHandler } from '@/components/common/reconnect-password
 import { UnlockProvider } from '@/contexts/unlock-context'
 import { ProtocolUrlHandler } from '@/components/common/protocol-url-handler'
 import { ThemeProvider } from '@/contexts/theme-context'
+import { WebPasswordManagerInit } from '@/components/common/web-password-manager-init'
 
 export const metadata: Metadata = {
   title: 'MCP Desktop Application',
@@ -62,8 +63,38 @@ export default function RootLayout({
             `
           }}
         />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                if (typeof window === 'undefined' || window.electron) return;
+                async function sha256(text) {
+                  const enc = new TextEncoder();
+                  const buf = await crypto.subtle.digest('SHA-256', enc.encode(text));
+                  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+                }
+                var STORAGE_KEY = 'peta_master_password_hash';
+                window.electron = {
+                  password: {
+                    has: function() { return Promise.resolve({ hasPassword: !!localStorage.getItem(STORAGE_KEY) }); },
+                    store: function(pw) { return sha256(pw).then(function(h) { localStorage.setItem(STORAGE_KEY, h); return { success: true }; }); },
+                    verify: function(pw) { return sha256(pw).then(function(h) { return { success: h === localStorage.getItem(STORAGE_KEY) }; }); },
+                    update: function(old, nw) {
+                      return sha256(old).then(function(h) {
+                        if (h !== localStorage.getItem(STORAGE_KEY)) return { success: false, error: 'Current password is incorrect' };
+                        return sha256(nw).then(function(h2) { localStorage.setItem(STORAGE_KEY, h2); return { success: true }; });
+                      });
+                    }
+                  },
+                  biometric: { isAvailable: function() { return Promise.resolve({ touchID: false, faceID: false, windowsHello: false }); } }
+                };
+              })();
+            `
+          }}
+        />
       </head>
       <body className="antialiased">
+        <WebPasswordManagerInit />
         <ThemeProvider>
           <div className="min-h-screen font-sans">
             <LockProvider>
