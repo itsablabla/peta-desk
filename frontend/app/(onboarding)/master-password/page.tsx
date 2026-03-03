@@ -58,47 +58,20 @@ export default function MasterPasswordPage() {
   const handleConfirmContinue = async () => {
     setShowConfirmDialog(false)
     try {
-      // Save master password using secure storage
-      if (window.electron?.password) {
-        const result = await window.electron.password.store(masterPassword)
-        if (result.success) {
-          // Only set localStorage flag for onboarding flow
-          localStorage.setItem('masterPasswordSet', 'true')
-
-          // Check if biometric authentication is available
-          if (window.electron?.biometric) {
-            try {
-              const biometricResult = await window.electron.biometric.isAvailable()
-
-              // If biometric is available (TouchID, FaceID, or Windows Hello), go to biometric setup
-              if (biometricResult.touchID || biometricResult.faceID || biometricResult.windowsHello) {
-                router.push('/biometric-setup')
-              } else {
-                // No biometric available, go directly to auto-lock-timer
-                router.push('/auto-lock-timer')
-              }
-            } catch (error) {
-              console.error('Failed to check biometric availability:', error)
-              // On error, go directly to auto-lock-timer
-              router.push('/auto-lock-timer')
-            }
-          } else {
-            // No biometric API available, go directly to auto-lock-timer
-            router.push('/auto-lock-timer')
-          }
-        } else {
-          alert('Failed to save password: ' + (result.error || 'Unknown error'))
-        }
-      } else {
-        alert('Password manager not available. Please restart the application.')
-      }
+      // Web-compatible: store password as SHA-256 hash in localStorage
+      const enc = new TextEncoder()
+      const buf = await crypto.subtle.digest('SHA-256', enc.encode(masterPassword))
+      const hash = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('')
+      localStorage.setItem('peta_master_password_hash', hash)
+      localStorage.setItem('masterPasswordSet', 'true')
+      // No biometric in web mode — go directly to auto-lock-timer
+      router.push('/auto-lock-timer')
     } catch (error) {
       console.error('Failed to save password:', error)
       alert('Failed to save password. Please try again.')
     }
   }
-
-  return (
+    return (
     <div className="min-h-screen flex flex-col">
       <Header showLockButton={false} />
       <div className="max-w-md mt-[100px] w-full flex-1 flex flex-col h-full justify-between">

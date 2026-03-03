@@ -123,17 +123,24 @@ function UnlockOverlay({ purpose, onSubmit, onClose }: UnlockOverlayProps) {
 
     try {
       // Verify password
-      if (window.electron?.password) {
-        const result = await window.electron.password.verify(password)
+      // Web-compatible password verification
+      const stored = localStorage.getItem('peta_master_password_hash')
+      if (stored) {
+        const enc = new TextEncoder()
+        const buf = await crypto.subtle.digest('SHA-256', enc.encode(password))
+        const hash = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('')
+        if (hash !== stored) {
+          setError('Incorrect master password. Please try again.')
+          setIsUnlocking(false)
+          return
+        }
+      } else if ((window as any).electron?.password) {
+        const result = await (window as any).electron.password.verify(password)
         if (!result.success) {
           setError('Incorrect master password. Please try again.')
           setIsUnlocking(false)
           return
         }
-      } else {
-        setError('Password manager not available.')
-        setIsUnlocking(false)
-        return
       }
 
       // Call the success callback

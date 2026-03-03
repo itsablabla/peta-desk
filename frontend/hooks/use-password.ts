@@ -1,6 +1,59 @@
 'use client'
-
 import { useState, useEffect } from 'react'
+
+const STORAGE_KEY = 'peta_master_password_hash'
+
+async function sha256(text: string): Promise<string> {
+  const enc = new TextEncoder()
+  const buf = await crypto.subtle.digest('SHA-256', enc.encode(text))
+  return Array.from(new Uint8Array(buf))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
+}
+
+const webPM = {
+  has: async (): Promise<{ hasPassword: boolean }> => {
+    if (typeof window !== 'undefined' && (window as any).electron?.password) {
+      return (window as any).electron.password.has()
+    }
+    return { hasPassword: !!localStorage.getItem(STORAGE_KEY) }
+  },
+  store: async (password: string): Promise<{ success: boolean; error?: string }> => {
+    if (typeof window !== 'undefined' && (window as any).electron?.password) {
+      return (window as any).electron.password.store(password)
+    }
+    try {
+      const hash = await sha256(password)
+      localStorage.setItem(STORAGE_KEY, hash)
+      return { success: true }
+    } catch (e) {
+      return { success: false, error: String(e) }
+    }
+  },
+  verify: async (password: string): Promise<{ success: boolean }> => {
+    if (typeof window !== 'undefined' && (window as any).electron?.password) {
+      return (window as any).electron.password.verify(password)
+    }
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      if (!stored) return { success: false }
+      const hash = await sha256(password)
+      return { success: hash === stored }
+    } catch {
+      return { success: false }
+    }
+  },
+  update: async (oldPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> => {
+    if (typeof window !== 'undefined' && (window as any).electron?.password) {
+      return (window as any).electron.password.update(oldPassword, newPassword)
+    }
+    const verified = await webPM.verify(oldPassword)
+    if (!verified.success) {
+      return { success: false, error: 'Current password is incorrect' }
+    }
+    return webPM.store(newPassword)
+  },
+}
 
 export function usePassword() {
   const [hasPassword, setHasPassword] = useState(false)
@@ -12,14 +65,8 @@ export function usePassword() {
 
   const checkHasPassword = async () => {
     try {
-      if (window.electron?.password) {
-        const result = await window.electron.password.has()
-        setHasPassword(result.hasPassword)
-      } else {
-        // Fallback to localStorage for backward compatibility
-        const masterPasswordSet = localStorage.getItem('masterPasswordSet') === 'true'
-        setHasPassword(masterPasswordSet)
-      }
+      const result = await webPM.has()
+      setHasPassword(result.hasPassword)
     } catch (error) {
       console.error('Failed to check password status:', error)
     } finally {
@@ -29,11 +76,8 @@ export function usePassword() {
 
   const verifyPassword = async (password: string): Promise<boolean> => {
     try {
-      if (window.electron?.password) {
-        const result = await window.electron.password.verify(password)
-        return result.success
-      }
-      return false
+      const result = await webPM.verify(password)
+      return result.success
     } catch (error) {
       console.error('Failed to verify password:', error)
       return false
@@ -42,16 +86,12 @@ export function usePassword() {
 
   const setPassword = async (password: string): Promise<boolean> => {
     try {
-      if (window.electron?.password) {
-        const result = await window.electron.password.store(password)
-        if (result.success) {
-          setHasPassword(true)
-          // Only update localStorage flag for onboarding flow
-          localStorage.setItem('masterPasswordSet', 'true')
-        }
-        return result.success
+      const result = await webPM.store(password)
+      if (result.success) {
+        setHasPassword(true)
+        localStorage.setItem('masterPasswordSet', 'true')
       }
-      return false
+      return result.success
     } catch (error) {
       console.error('Failed to set password:', error)
       return false
@@ -60,11 +100,7 @@ export function usePassword() {
 
   const updatePassword = async (oldPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      if (window.electron?.password) {
-        const result = await window.electron.password.update(oldPassword, newPassword)
-        return result
-      }
-      return { success: false, error: 'Password manager not available' }
+      return await webPM.update(oldPassword, newPassword)
     } catch (error) {
       console.error('Failed to update password:', error)
       return { success: false, error: 'Failed to update password' }
@@ -77,6 +113,6 @@ export function usePassword() {
     verifyPassword,
     setPassword,
     updatePassword,
-    checkHasPassword
+    checkHasPassword,
   }
 }

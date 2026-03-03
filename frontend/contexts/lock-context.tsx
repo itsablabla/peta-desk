@@ -114,8 +114,8 @@ export function LockProvider({ children }: { children: React.ReactNode }) {
   const unlockApp = async (password: string) => {
     try {
       // Use secure password verification
-      if (typeof window !== 'undefined' && window.electron?.password) {
-        const result = await window.electron.password.verify(password)
+      if (typeof window !== 'undefined' && (window as any).electron?.password) {
+        const result = await (window as any).electron.password.verify(password)
         if (result.success) {
           setIsLocked(false)
           setIsUserInitiatedLock(false)
